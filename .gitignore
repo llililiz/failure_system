@@ -1,0 +1,19 @@
+# Streamlit secrets (절대 커밋 금지!)
+.streamlit/secrets.toml
+
+# 환경변수
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# 데이터 (용량이 크거나 내부 데이터인 경우)
+# data/*.csv   ← 필요 시 주석 해제
+
+# OS
+.DS_Store
+Thumbs.db
