@@ -134,32 +134,30 @@ def inject_enter_key_js():
 
 # ── API Key ──────────────────────────────────────────────
 def get_api_key() -> str:
-    """우선순위: secrets.toml → session_state(사이드바 수동 입력)"""
-    try:
-        key = st.secrets["OPENAI_API_KEY"]
-        if key:
-            return key
-    except (KeyError, AttributeError, Exception):
-        pass
+    """API Key를 .env → session_state 순서로 반환"""
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    env_key = os.getenv("OPENAI_API_KEY", "")
+    if env_key and not env_key.startswith("your_"):
+        return env_key
     return st.session_state.get("api_key", "")
 
 
 def render_api_key_section():
-    """secrets.toml 키 있으면 '적용됨' 표시, 없으면 입력란"""
-    try:
-        secret_key = st.secrets["OPENAI_API_KEY"]
-    except (KeyError, AttributeError, Exception):
-        secret_key = ""
-
-    if secret_key:
-        st.success("🔑 API Key: secrets.toml 적용됨", icon="✅")
+    """.env 키 있으면 '적용됨' 표시, 없으면 입력란"""
+    import os
+    from dotenv import load_dotenv
+    load_dotenv()
+    env_key = os.getenv("OPENAI_API_KEY", "")
+    if env_key and not env_key.startswith("your_"):
+        st.success("🔑 API Key: .env 적용됨", icon="✅")
     else:
-        with st.expander("🔑 OpenAI API Key 입력", expanded=not st.session_state.get("api_key")):
+        with st.expander("🔑 API Key 입력", expanded=not st.session_state.get("api_key")):
             key_input = st.text_input(
                 "API Key",
                 value=st.session_state.get("api_key", ""),
                 type="password",
-                placeholder="sk-...",
             )
             if key_input:
                 st.session_state["api_key"] = key_input

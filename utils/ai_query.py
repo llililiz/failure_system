@@ -15,8 +15,9 @@ import re
 import pandas as pd
 from collections import Counter
 from datetime import datetime
-from openai import OpenAI
 from dotenv import load_dotenv
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import AIMessage  # v1: 반환 타입 명시용
 from utils.fuzzy_match import extract_equipment_filter, apply_equipment_filter
 
 load_dotenv()
@@ -371,9 +372,17 @@ def run_ai_query(
     date_to=None,
 ) -> dict:
     if not api_key:
-        return {"error": "OpenAI API Key가 없습니다."}
+        return {"error": "API Key가 없습니다. .env 파일의 OPENAI_API_KEY를 확인하세요."}
 
-    client  = OpenAI(api_key=api_key)
+    # LangChain v1 init_chat_model: provider-agnostic 방식
+    # 사내 AI 전환 시: .env의 OPENAI_BASE_URL 추가만 하면 됨
+    client = init_chat_model(
+        model=f"openai:{model}",   # "openai:gpt-4o-mini" 형식
+        api_key=api_key,
+        base_url=os.getenv("OPENAI_BASE_URL"),  # 사내 AI URL (없으면 None)
+        temperature=0.0,
+        max_tokens=900,
+    )
     base_df = df.copy()
 
     # ── 1. 사이드바 기간 필터 선적용 ──
@@ -443,18 +452,18 @@ def run_ai_query(
     system_prompt = build_system_prompt(base_df) + applied_range
 
     try:
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user",   "content": f'질의: "{query}"'},
-            ],
-            temperature=0.0, max_tokens=900,
-        )
+        # LangChain v1 권장: (role, content) 튜플 형식
+        # SystemMessage 객체 대신 튜플을 사용하면 모든 provider에서 호환됨
+        messages = [
+            ("system", system_prompt),
+            ("human",  f'질의: "{query}"'),
+        ]
+        resp: AIMessage = client.invoke(messages)
+        raw  = resp.content.strip()
     except Exception as e:
-        return {"error": f"OpenAI API 오류: {str(e)}"}
+        return {"error": f"AI API 오류: {str(e)}"}
 
-    raw = resp.choices[0].message.content.strip().replace("```json","").replace("```","").strip()
+    raw = raw.replace("```json","").replace("```","").strip()
     try:
         parsed = json.loads(raw)
     except json.JSONDecodeError:
