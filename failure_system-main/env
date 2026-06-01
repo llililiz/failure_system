@@ -1,0 +1,15 @@
+# ── LLM 설정 ──────────────────────────────────────────────
+# OpenAI 사용 시
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+
+# 사내 AI 전환 시: 아래 두 줄 활성화 + OPENAI_API_KEY 값만 사내 키로 교체
+# OPENAI_BASE_URL=http://사내서버/v1
+# OPENAI_MODEL=사내모델명
+
+# ── 데이터 설정 ────────────────────────────────────────────
+CSV_PATH=data/설비_고장률_정보.csv
+CSV_ENCODING=cp949
+
+# ── 앱 설정 ───────────────────────────────────────────────
+APP_TITLE=설비 고장정보 조회 시스템
